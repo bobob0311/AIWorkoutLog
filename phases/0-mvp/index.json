@@ -1,0 +1,42 @@
+{
+  "project": "헬스 기록 웹사이트",
+  "phase": "0-mvp",
+  "steps": [
+    {
+      "step": 0,
+      "name": "project-definition",
+      "status": "completed",
+      "summary": "헬스 기록 웹사이트의 제품 방향, FSD 구조, TDD 원칙을 문서와 하네스에 반영했다."
+    },
+    {
+      "step": 1,
+      "name": "test-foundation-and-auth-gate",
+      "status": "completed",
+      "summary": "Vitest, Testing Library, Playwright 기반 테스트 환경과 프로필 선택 + 비밀번호 로그인, 보호 페이지 접근 차단을 구현했다."
+    },
+    {
+      "step": 2,
+      "name": "calendar-shell",
+      "status": "completed",
+      "summary": "월간 달력, 날짜별 총 볼륨과 부위별 볼륨 표시, 월간 요약 카드를 테스트 우선으로 구현했다."
+    },
+    {
+      "step": 3,
+      "name": "exercise-catalog-and-daily-record",
+      "status": "completed",
+      "summary": "기본 운동 검색, 사용자 운동 추가, 날짜 상세 기록 CRUD, 세트 단위 볼륨 계산을 mock 저장소 기반으로 구현했다."
+    },
+    {
+      "step": 4,
+      "name": "analytics",
+      "status": "completed",
+      "summary": "일·주·월 볼륨 집계 로직, 요약 카드, 부위별 볼륨 바 차트를 달력/상세와 같은 계산 기준으로 구현했다."
+    },
+    {
+      "step": 5,
+      "name": "polish-and-review",
+      "status": "completed",
+      "summary": "공통 네비게이션, 모바일 달력 스크롤 보강, 날짜 상세 보호 가드, 회귀 UI 테스트를 추가하고 전체 빌드/테스트를 통과시켰다."
+    }
+  ]
+}

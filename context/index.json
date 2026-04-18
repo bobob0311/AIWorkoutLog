@@ -1,0 +1,15 @@
+{
+  "active": "1-ux-analytics-refactor",
+  "items": [
+    {
+      "phase": "0-mvp",
+      "file": "context/0-mvp.json",
+      "status": "completed"
+    },
+    {
+      "phase": "1-ux-analytics-refactor",
+      "file": "context/1-ux-analytics-refactor.json",
+      "status": "completed"
+    }
+  ]
+}

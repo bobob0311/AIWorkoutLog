@@ -1,0 +1,43 @@
+{
+  "project": "헬스 기록 웹사이트",
+  "phase": "1-ux-analytics-refactor",
+  "goal": "달력과 통계의 탐색성과 해석성을 높이는 사용성 리팩토링",
+  "steps": [
+    {
+      "step": 0,
+      "name": "document-decisions",
+      "status": "completed",
+      "summary": "ADR, 아키텍처, phase, context를 리팩토링 기준으로 문서화했다."
+    },
+    {
+      "step": 1,
+      "name": "calendar-cell-visualization",
+      "status": "completed",
+      "summary": "날짜 칸을 총 볼륨 배지와 부위별 미니 차트 중심으로 바꾸고 공통 부위 색상 규칙을 맞췄다."
+    },
+    {
+      "step": 2,
+      "name": "month-navigation",
+      "status": "completed",
+      "summary": "이전 달, 다음 달, 이번 달 이동을 추가하고 보이는 월 기준으로 달력과 월간 요약이 함께 갱신되도록 정리했다."
+    },
+    {
+      "step": 3,
+      "name": "analytics-range-and-undertrained",
+      "status": "completed",
+      "summary": "통계에 직접 기간 설정과 부족 부위 계산을 추가하고, 직전 동일 기간 비교와 fallback 규칙을 서비스 계층에서 처리하도록 정리했다."
+    },
+    {
+      "step": 4,
+      "name": "exercise-ranking-chart",
+      "status": "completed",
+      "summary": "운동별 총 볼륨 랭킹 차트를 추가하고, 같은 부위 운동은 같은 색으로 묶여 보이도록 정리했다."
+    },
+    {
+      "step": 5,
+      "name": "polish-and-review",
+      "status": "completed",
+      "summary": "모바일 레이아웃과 문구를 다듬고, 깨진 한글과 캐시성 빌드 문제를 정리한 뒤 전체 회귀 검증을 마쳤다."
+    }
+  ]
+}
