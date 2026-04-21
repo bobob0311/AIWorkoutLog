@@ -1,17 +1,17 @@
 "use client";
 
 import { useMemo } from "react";
-import { AnalyticsDashboard } from "@/widgets/analytics-dashboard/ui/analytics-dashboard";
 import { getTodayDateKey } from "@/shared/lib/date";
 import { getExerciseLogs } from "@/shared/lib/mock-record-storage";
+import { AnalyticsDashboard } from "@/widgets/analytics-dashboard/ui/analytics-dashboard";
 
-interface AnalyticsClientPageProps {
+interface AnalyticsCompareClientPageProps {
   referenceDate?: string;
 }
 
-export function AnalyticsClientPage({ referenceDate: injectedReferenceDate }: AnalyticsClientPageProps = {}) {
+export function AnalyticsCompareClientPage({ referenceDate: injectedReferenceDate }: AnalyticsCompareClientPageProps = {}) {
   const logs = useMemo(() => getExerciseLogs(), []);
   const referenceDate = useMemo(() => injectedReferenceDate ?? getTodayDateKey(), [injectedReferenceDate]);
 
-  return <AnalyticsDashboard logs={logs} referenceDate={referenceDate} />;
+  return <AnalyticsDashboard logs={logs} referenceDate={referenceDate} view="comparison" />;
 }

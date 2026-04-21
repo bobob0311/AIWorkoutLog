@@ -71,6 +71,99 @@
           "status": "completed"
         }
       ]
+    },
+    {
+      "dir": "2-training-insight-ui",
+      "status": "completed",
+      "steps": [
+        {
+          "step": 0,
+          "name": "document-training-insight-decisions",
+          "status": "completed"
+        },
+        {
+          "step": 1,
+          "name": "analytics-view-model-tests",
+          "status": "completed"
+        },
+        {
+          "step": 2,
+          "name": "recommendation-and-weekly-trend-model",
+          "status": "completed"
+        },
+        {
+          "step": 3,
+          "name": "exercise-progress-model",
+          "status": "completed"
+        },
+        {
+          "step": 4,
+          "name": "analytics-dashboard-insight-ui",
+          "status": "completed"
+        },
+        {
+          "step": 5,
+          "name": "polish-and-review",
+          "status": "completed"
+        }
+      ]
+    },
+    {
+      "dir": "3-analytics-refactor-and-date-baseline",
+      "status": "in_progress",
+      "steps": [
+        {
+          "step": 0,
+          "name": "document-refactor-decisions",
+          "status": "completed"
+        },
+        {
+          "step": 1,
+          "name": "date-baseline-tests",
+          "status": "completed"
+        },
+        {
+          "step": 2,
+          "name": "remove-hardcoded-reference-date",
+          "status": "completed"
+        },
+        {
+          "step": 3,
+          "name": "split-analytics-dashboard-components",
+          "status": "completed"
+        },
+        {
+          "step": 4,
+          "name": "korean-copy-and-test-cleanup",
+          "status": "pending"
+        },
+        {
+          "step": 5,
+          "name": "polish-and-review",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "dir": "4-simple-experiment",
+      "status": "in_progress",
+      "steps": [
+        {
+          "step": 0,
+          "name": "define-experiment",
+          "status": "completed"
+        },
+        {
+          "step": 1,
+          "name": "build-small-prototype",
+          "status": "pending"
+        },
+        {
+          "step": 2,
+          "name": "review-result",
+          "status": "pending"
+        }
+      ]
     }
   ]
 }

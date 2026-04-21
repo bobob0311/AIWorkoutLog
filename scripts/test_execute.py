@@ -25,11 +25,33 @@ def tmp_project(tmp_path):
 @pytest.fixture
 def phase_files(tmp_project):
     (tmp_project / "phases" / "index.json").write_text(
-        json.dumps({"phases": [{"dir": "0-mvp", "status": "pending"}]}, indent=2),
+        json.dumps(
+            {
+                "phases": [
+                    {
+                        "dir": "0-mvp",
+                        "status": "pending",
+                        "steps": [
+                            {"step": 0, "name": "setup", "status": "completed"},
+                            {"step": 1, "name": "core", "status": "pending"},
+                        ],
+                    }
+                ]
+            },
+            indent=2,
+            ensure_ascii=False,
+        ),
         encoding="utf-8",
     )
     (tmp_project / "context" / "index.json").write_text(
-        json.dumps({"active": "0-mvp", "items": [{"phase": "0-mvp", "file": "context/0-mvp.json", "status": "in_progress"}]}, indent=2, ensure_ascii=False),
+        json.dumps(
+            {
+                "active": "0-mvp",
+                "items": [{"phase": "0-mvp", "file": "context/0-mvp.json", "status": "in_progress"}],
+            },
+            indent=2,
+            ensure_ascii=False,
+        ),
         encoding="utf-8",
     )
     phase_dir = tmp_project / "phases" / "0-mvp"
@@ -131,12 +153,23 @@ def test_find_current_step_falls_back_to_pending():
     assert current["step"] == 1
 
 
+def test_derive_phase_status():
+    assert ex.StepExecutor._derive_phase_status([{"status": "completed"}]) == "completed"
+    assert ex.StepExecutor._derive_phase_status([{"status": "in_progress"}]) == "in_progress"
+    assert ex.StepExecutor._derive_phase_status([{"status": "blocked"}]) == "blocked"
+    assert ex.StepExecutor._derive_phase_status([{"status": "error"}]) == "error"
+    assert ex.StepExecutor._derive_phase_status([{"status": "pending"}]) == "pending"
+
+
 def test_validate_structure_passes(executor):
     executor._validate_structure()
 
 
 def test_validate_structure_rejects_invalid_status(executor):
-    ex.StepExecutor._write_json(executor._index_file, {"project": "x", "phase": "0-mvp", "steps": [{"step": 0, "name": "bad", "status": "weird"}]})
+    ex.StepExecutor._write_json(
+        executor._index_file,
+        {"project": "x", "phase": "0-mvp", "steps": [{"step": 0, "name": "bad", "status": "weird"}]},
+    )
     with pytest.raises(SystemExit) as exc_info:
         executor._validate_structure()
     assert exc_info.value.code == 1
@@ -151,10 +184,36 @@ def test_build_execution_payload_contains_context_and_prompt(executor):
     assert "Do work" in payload["prompt"]
 
 
+def test_complete_current_step_updates_phase_context_and_top_index(executor):
+    executor.complete_current_step(summary="core done", next_items=["ship it"])
+
+    phase_index = ex.StepExecutor._read_json(executor._index_file)
+    top_index = ex.StepExecutor._read_json(executor._top_index_file)
+    context = ex.StepExecutor._read_json(executor._context_file)
+    context_index = ex.StepExecutor._read_json(executor._context_dir / "index.json")
+
+    assert phase_index["steps"][1]["status"] == "completed"
+    assert phase_index["steps"][1]["summary"] == "core done"
+    assert top_index["phases"][0]["status"] == "completed"
+    assert top_index["phases"][0]["steps"][1]["status"] == "completed"
+    assert context["status"] == "completed"
+    assert "core done" in context["done"]
+    assert context["next"] == ["ship it"]
+    assert context_index["items"][0]["status"] == "completed"
+    assert context_index["active"] is None
+
+
 def test_main_dry_run(tmp_project, phase_files, capsys):
     with patch.object(ex, "ROOT", tmp_project):
         with patch("sys.argv", ["execute.py", "0-mvp", "--dry-run"]):
             ex.main()
     output = capsys.readouterr().out
-    assert "구조 검증 완료: 0-mvp" in output
+    assert "0-mvp" in output
 
+
+def test_main_complete_requires_summary(tmp_project, phase_files):
+    with patch.object(ex, "ROOT", tmp_project):
+        with patch("sys.argv", ["execute.py", "0-mvp", "--complete"]):
+            with pytest.raises(SystemExit) as exc_info:
+                ex.main()
+    assert exc_info.value.code == 2

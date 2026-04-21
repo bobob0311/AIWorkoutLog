@@ -1,0 +1,44 @@
+{
+  "project": "Health Log Website",
+  "phase": "3-analytics-refactor-and-date-baseline",
+  "goal": "분석 화면 컴포넌트 구조를 정리하고 통계 기준일 하드코딩을 제거한다.",
+  "status": "in_progress",
+  "steps": [
+    {
+      "step": 0,
+      "name": "document-refactor-decisions",
+      "status": "completed",
+      "summary": "PRD, ADR, ARCHITECTURE, UI_GUIDE, context에 리팩토링과 기준 날짜 결정을 반영했다."
+    },
+    {
+      "step": 1,
+      "name": "date-baseline-tests",
+      "status": "completed",
+      "summary": "오늘 날짜 helper 테스트와 통계/비교 화면의 한글 UI 기대값 테스트를 추가했다."
+    },
+    {
+      "step": 2,
+      "name": "remove-hardcoded-reference-date",
+      "status": "completed",
+      "summary": "Added shared date helper and removed hardcoded analytics reference date.",
+      "completed_at": "2026-04-21T00:01:27+0900"
+    },
+    {
+      "step": 3,
+      "name": "split-analytics-dashboard-components",
+      "status": "completed",
+      "summary": "AnalyticsDashboard를 상태와 view model 생성 중심으로 축소하고, 필터/통계/비교/반복 UI 컴포넌트로 렌더링 책임을 분리했다.",
+      "completed_at": "2026-04-21T21:02:06+0900"
+    },
+    {
+      "step": 4,
+      "name": "korean-copy-and-test-cleanup",
+      "status": "pending"
+    },
+    {
+      "step": 5,
+      "name": "polish-and-review",
+      "status": "pending"
+    }
+  ]
+}

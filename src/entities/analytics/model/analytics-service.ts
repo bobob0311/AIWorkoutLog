@@ -47,6 +47,82 @@ export type ExerciseRankingItem = {
   color: string;
 };
 
+export type TrendStatus = "increase" | "decrease" | "maintain";
+
+export type RecommendationEvidence = {
+  label: string;
+  value: string;
+};
+
+export type RecommendedBodyPart = {
+  bodyPart: BodyPart;
+  reason: string;
+  currentVolume: number;
+  previousVolume: number;
+  delta: number;
+  changeRate: number | null;
+  lastTrainedDate: string | null;
+  daysSinceLastTrained: number | null;
+  weeklyShare: number;
+  evidence: RecommendationEvidence[];
+};
+
+export type WeekVolumeBucket = {
+  startDate: string;
+  endDate: string;
+  totalVolume: number;
+};
+
+export type BodyPartTrend = {
+  bodyPart: BodyPart;
+  currentVolume: number;
+  previousVolume: number;
+  delta: number;
+  changeRate: number | null;
+  status: TrendStatus;
+};
+
+export type WeeklyVolumeTrend = {
+  currentStartDate: string;
+  currentEndDate: string;
+  previousStartDate: string;
+  previousEndDate: string;
+  currentWeekVolume: number;
+  previousComparableVolume: number;
+  delta: number;
+  changeRate: number | null;
+  status: TrendStatus;
+  recentWeeks: WeekVolumeBucket[];
+  byBodyPart: BodyPartTrend[];
+};
+
+export type ExerciseProgressStatus =
+  | "weight_increase"
+  | "volume_increase"
+  | "volume_decrease"
+  | "maintained"
+  | "heavy_session"
+  | "insufficient";
+
+export type ExerciseProgressChange = {
+  exerciseName: string;
+  bodyPart: BodyPart;
+  latestDate: string;
+  previousDate: string | null;
+  latestVolume: number;
+  previousVolume: number | null;
+  volumeChangeRate: number | null;
+  latestMaxWeight: number;
+  previousMaxWeight: number | null;
+  maxWeightDelta: number | null;
+  latestSetCount: number;
+  previousSetCount: number | null;
+  latestAverageReps: number;
+  previousAverageReps: number | null;
+  status: ExerciseProgressStatus;
+  note: string;
+};
+
 export type AnalyticsViewModel = {
   summary: AnalyticsSummary;
   byBodyPart: BodyPartVolumeSummary[];
@@ -54,6 +130,9 @@ export type AnalyticsViewModel = {
   undertrainedBodyParts: BodyPartInsight[];
   comparisons: BodyPartComparison[];
   exerciseRanking: ExerciseRankingItem[];
+  recommendedBodyParts: RecommendedBodyPart[];
+  weeklyVolumeTrend: WeeklyVolumeTrend;
+  exerciseProgressChanges: ExerciseProgressChange[];
   filter: AnalyticsFilter;
 };
 
@@ -61,6 +140,8 @@ type RangeBounds = {
   startDate: string;
   endDate: string;
 };
+
+const bodyParts: BodyPart[] = ["chest", "back", "legs", "shoulders", "arms", "core"];
 
 function toDate(date: string): Date {
   return new Date(`${date}T00:00:00`);
@@ -139,6 +220,73 @@ function getPreviousBounds(bounds: RangeBounds): RangeBounds {
     startDate: formatDate(previousStart),
     endDate: formatDate(previousEnd),
   };
+}
+
+function addDays(date: Date, amount: number): Date {
+  const copy = new Date(date);
+  copy.setDate(copy.getDate() + amount);
+  copy.setHours(0, 0, 0, 0);
+  return copy;
+}
+
+function diffDays(fromDate: string, toDateValue: string): number {
+  return Math.floor((toDate(toDateValue).getTime() - toDate(fromDate).getTime()) / 86400000);
+}
+
+function getWeekToDateBounds(referenceDate: string): { current: RangeBounds; previous: RangeBounds } {
+  const reference = toDate(referenceDate);
+  const currentStart = startOfWeek(reference);
+  const offset = Math.floor((reference.getTime() - currentStart.getTime()) / 86400000);
+  const previousStart = addDays(currentStart, -7);
+
+  return {
+    current: {
+      startDate: formatDate(currentStart),
+      endDate: referenceDate,
+    },
+    previous: {
+      startDate: formatDate(previousStart),
+      endDate: formatDate(addDays(previousStart, offset)),
+    },
+  };
+}
+
+function sumVolume(logs: ExerciseLog[], bounds: RangeBounds): number {
+  return logs.filter((log) => isWithinBounds(log.date, bounds)).reduce((sum, log) => sum + log.totalVolume, 0);
+}
+
+function getVolumeByBodyPart(logs: ExerciseLog[], bounds: RangeBounds): Record<BodyPart, number> {
+  const result = Object.fromEntries(bodyParts.map((bodyPart) => [bodyPart, 0])) as Record<BodyPart, number>;
+
+  for (const log of logs) {
+    if (isWithinBounds(log.date, bounds)) {
+      result[log.bodyPart] += log.totalVolume;
+    }
+  }
+
+  return result;
+}
+
+function getChangeRate(current: number, previous: number): number | null {
+  if (previous <= 0) return null;
+  return Number((((current - previous) / previous) * 100).toFixed(1));
+}
+
+function getTrendStatus(changeRate: number | null, delta: number): TrendStatus {
+  if (changeRate === null) {
+    if (delta > 0) return "increase";
+    return "maintain";
+  }
+
+  if (changeRate >= 5) return "increase";
+  if (changeRate <= -5) return "decrease";
+  return "maintain";
+}
+
+function formatSignedPercent(changeRate: number | null): string {
+  if (changeRate === null) return "비교 기준 없음";
+  if (changeRate > 0) return `+${changeRate}%`;
+  return `${changeRate}%`;
 }
 
 function buildBodyPartSummary(logs: ExerciseLog[]): BodyPartVolumeSummary[] {
@@ -268,6 +416,267 @@ function buildExerciseRanking(logs: ExerciseLog[]): ExerciseRankingItem[] {
   return Array.from(rankingMap.values()).sort((a, b) => b.totalVolume - a.totalVolume);
 }
 
+function buildRecentWeekBuckets(logs: ExerciseLog[], referenceDate: string): WeekVolumeBucket[] {
+  const referenceWeekStart = startOfWeek(toDate(referenceDate));
+
+  return [4, 3, 2, 1].map((weekOffset) => {
+    const start = addDays(referenceWeekStart, -7 * weekOffset);
+    const end = addDays(start, 6);
+    const bounds = {
+      startDate: formatDate(start),
+      endDate: formatDate(end),
+    };
+
+    return {
+      ...bounds,
+      totalVolume: sumVolume(logs, bounds),
+    };
+  });
+}
+
+function buildWeeklyVolumeTrend(logs: ExerciseLog[], referenceDate: string): WeeklyVolumeTrend {
+  const bounds = getWeekToDateBounds(referenceDate);
+  const currentWeekVolume = sumVolume(logs, bounds.current);
+  const previousComparableVolume = sumVolume(logs, bounds.previous);
+  const delta = currentWeekVolume - previousComparableVolume;
+  const changeRate = getChangeRate(currentWeekVolume, previousComparableVolume);
+  const currentByBodyPart = getVolumeByBodyPart(logs, bounds.current);
+  const previousByBodyPart = getVolumeByBodyPart(logs, bounds.previous);
+
+  return {
+    currentStartDate: bounds.current.startDate,
+    currentEndDate: bounds.current.endDate,
+    previousStartDate: bounds.previous.startDate,
+    previousEndDate: bounds.previous.endDate,
+    currentWeekVolume,
+    previousComparableVolume,
+    delta,
+    changeRate,
+    status: getTrendStatus(changeRate, delta),
+    recentWeeks: buildRecentWeekBuckets(logs, referenceDate),
+    byBodyPart: bodyParts.map((bodyPart) => {
+      const currentVolume = currentByBodyPart[bodyPart];
+      const previousVolume = previousByBodyPart[bodyPart];
+      const bodyPartDelta = currentVolume - previousVolume;
+      const bodyPartChangeRate = getChangeRate(currentVolume, previousVolume);
+
+      return {
+        bodyPart,
+        currentVolume,
+        previousVolume,
+        delta: bodyPartDelta,
+        changeRate: bodyPartChangeRate,
+        status: getTrendStatus(bodyPartChangeRate, bodyPartDelta),
+      };
+    }),
+  };
+}
+
+function buildRecommendedBodyParts(logs: ExerciseLog[], referenceDate: string): RecommendedBodyPart[] {
+  const bounds = getWeekToDateBounds(referenceDate);
+  const currentByBodyPart = getVolumeByBodyPart(logs, bounds.current);
+  const previousByBodyPart = getVolumeByBodyPart(logs, bounds.previous);
+  const currentTotal = bodyParts.reduce((sum, bodyPart) => sum + currentByBodyPart[bodyPart], 0);
+
+  return bodyParts
+    .map((bodyPart) => {
+      const currentVolume = currentByBodyPart[bodyPart];
+      const previousVolume = previousByBodyPart[bodyPart];
+      const delta = currentVolume - previousVolume;
+      const changeRate = getChangeRate(currentVolume, previousVolume);
+      const bodyPartLogs = logs.filter((log) => log.bodyPart === bodyPart && log.date <= referenceDate).sort((a, b) => b.date.localeCompare(a.date));
+      const lastTrainedDate = bodyPartLogs[0]?.date ?? null;
+      const daysSinceLastTrained = lastTrainedDate ? diffDays(lastTrainedDate, referenceDate) : null;
+      const weeklyShare = currentTotal > 0 ? Number(((currentVolume / currentTotal) * 100).toFixed(1)) : 0;
+      const evidence: RecommendationEvidence[] = [];
+      let score = 0;
+
+      if (previousVolume > 0 && currentVolume < previousVolume) {
+        evidence.push({ label: "지난주 대비", value: formatSignedPercent(changeRate) });
+        score += Math.min(60, Math.abs(changeRate ?? 0));
+      }
+
+      if (daysSinceLastTrained === null) {
+        evidence.push({ label: "마지막 기록", value: "기록 없음" });
+        score += 45;
+      } else if (daysSinceLastTrained >= 4) {
+        evidence.push({ label: "마지막 기록", value: `${daysSinceLastTrained}일 전` });
+        score += Math.min(35, daysSinceLastTrained * 4);
+      }
+
+      if (currentTotal > 0 && weeklyShare < 15) {
+        evidence.push({ label: "이번 주 비중", value: `${weeklyShare}%` });
+        score += 20 - weeklyShare;
+      }
+
+      if (currentVolume === 0 && previousVolume > 0) {
+        evidence.push({ label: "이번 주", value: "0kg" });
+        score += 30;
+      }
+
+      if (evidence.length === 0) {
+        evidence.push({ label: "이번 주 볼륨", value: `${currentVolume}kg` });
+      }
+
+      const reason =
+        previousVolume > 0 && currentVolume < previousVolume
+          ? `지난주 같은 요일까지의 볼륨보다 ${formatSignedPercent(changeRate)} 낮습니다.`
+          : daysSinceLastTrained === null
+            ? "아직 이 부위의 기록이 없습니다."
+            : daysSinceLastTrained >= 4
+              ? `마지막 기록 후 ${daysSinceLastTrained}일이 지났습니다.`
+              : "이번 주 전체 볼륨에서 차지하는 비중이 낮습니다.";
+
+      return {
+        bodyPart,
+        reason,
+        currentVolume,
+        previousVolume,
+        delta,
+        changeRate,
+        lastTrainedDate,
+        daysSinceLastTrained,
+        weeklyShare,
+        evidence,
+        score,
+      };
+    })
+    .sort((a, b) => b.score - a.score || a.bodyPart.localeCompare(b.bodyPart))
+    .slice(0, 3)
+    .map(({ score: _score, ...item }) => item);
+}
+
+type ExerciseSessionSummary = {
+  exerciseName: string;
+  bodyPart: BodyPart;
+  date: string;
+  totalVolume: number;
+  maxWeight: number;
+  setCount: number;
+  averageReps: number;
+};
+
+function summarizeExerciseSessions(logs: ExerciseLog[]): ExerciseSessionSummary[] {
+  const sessions = new Map<string, ExerciseSessionSummary & { totalReps: number }>();
+
+  for (const log of logs) {
+    const key = `${log.exerciseName}:${log.date}`;
+    const current = sessions.get(key) ?? {
+      exerciseName: log.exerciseName,
+      bodyPart: log.bodyPart,
+      date: log.date,
+      totalVolume: 0,
+      maxWeight: 0,
+      setCount: 0,
+      averageReps: 0,
+      totalReps: 0,
+    };
+
+    current.totalVolume += log.totalVolume;
+    for (const set of log.sets) {
+      current.maxWeight = Math.max(current.maxWeight, set.weight);
+      current.setCount += 1;
+      current.totalReps += set.reps;
+    }
+    current.averageReps = current.setCount > 0 ? Number((current.totalReps / current.setCount).toFixed(1)) : 0;
+    sessions.set(key, current);
+  }
+
+  return Array.from(sessions.values()).map(({ totalReps: _totalReps, ...session }) => session);
+}
+
+function getExerciseProgressStatus(
+  latest: ExerciseSessionSummary,
+  previous: ExerciseSessionSummary,
+  volumeChangeRate: number | null,
+): { status: ExerciseProgressStatus; note: string } {
+  const maxWeightDelta = latest.maxWeight - previous.maxWeight;
+  const setCountDelta = latest.setCount - previous.setCount;
+
+  if (maxWeightDelta > 0 && latest.totalVolume < previous.totalVolume) {
+    return { status: "heavy_session", note: "최고 중량은 올랐지만 총 볼륨은 줄었습니다." };
+  }
+
+  if (maxWeightDelta > 0) {
+    return { status: "weight_increase", note: "직전 세션보다 최고 중량이 올랐습니다." };
+  }
+
+  if ((volumeChangeRate ?? 0) >= 5) {
+    return {
+      status: "volume_increase",
+      note: setCountDelta > 0 ? "세트 수 증가가 볼륨 상승에 영향을 줬습니다." : "직전 세션보다 총 볼륨이 늘었습니다.",
+    };
+  }
+
+  if ((volumeChangeRate ?? 0) <= -5) {
+    return { status: "volume_decrease", note: "직전 세션보다 총 볼륨이 줄었습니다." };
+  }
+
+  return { status: "maintained", note: "직전 세션과 비슷한 수행량을 유지했습니다." };
+}
+
+function buildExerciseProgressChanges(logs: ExerciseLog[]): ExerciseProgressChange[] {
+  const sessionsByExercise = new Map<string, ExerciseSessionSummary[]>();
+
+  for (const session of summarizeExerciseSessions(logs)) {
+    const current = sessionsByExercise.get(session.exerciseName) ?? [];
+    current.push(session);
+    sessionsByExercise.set(session.exerciseName, current);
+  }
+
+  return Array.from(sessionsByExercise.entries())
+    .map(([exerciseName, sessions]) => {
+      const sortedSessions = sessions.sort((a, b) => b.date.localeCompare(a.date));
+      const latest = sortedSessions[0];
+      const previous = sortedSessions[1] ?? null;
+
+      if (!previous) {
+        return {
+          exerciseName,
+          bodyPart: latest.bodyPart,
+          latestDate: latest.date,
+          previousDate: null,
+          latestVolume: latest.totalVolume,
+          previousVolume: null,
+          volumeChangeRate: null,
+          latestMaxWeight: latest.maxWeight,
+          previousMaxWeight: null,
+          maxWeightDelta: null,
+          latestSetCount: latest.setCount,
+          previousSetCount: null,
+          latestAverageReps: latest.averageReps,
+          previousAverageReps: null,
+          status: "insufficient",
+          note: "비교할 이전 세션이 아직 없습니다.",
+        } satisfies ExerciseProgressChange;
+      }
+
+      const volumeChangeRate = getChangeRate(latest.totalVolume, previous.totalVolume);
+      const maxWeightDelta = latest.maxWeight - previous.maxWeight;
+      const status = getExerciseProgressStatus(latest, previous, volumeChangeRate);
+
+      return {
+        exerciseName,
+        bodyPart: latest.bodyPart,
+        latestDate: latest.date,
+        previousDate: previous.date,
+        latestVolume: latest.totalVolume,
+        previousVolume: previous.totalVolume,
+        volumeChangeRate,
+        latestMaxWeight: latest.maxWeight,
+        previousMaxWeight: previous.maxWeight,
+        maxWeightDelta,
+        latestSetCount: latest.setCount,
+        previousSetCount: previous.setCount,
+        latestAverageReps: latest.averageReps,
+        previousAverageReps: previous.averageReps,
+        status: status.status,
+        note: status.note,
+      };
+    })
+    .sort((a, b) => b.latestDate.localeCompare(a.latestDate) || b.latestVolume - a.latestVolume);
+}
+
 export function buildAnalyticsViewModel(logs: ExerciseLog[], filter: AnalyticsFilter): AnalyticsViewModel {
   const bounds = getFilterBounds(filter);
   const previousBounds = getPreviousBounds(bounds);
@@ -284,6 +693,9 @@ export function buildAnalyticsViewModel(logs: ExerciseLog[], filter: AnalyticsFi
     undertrainedBodyParts: buildUndertrainedBodyParts(comparisons),
     comparisons,
     exerciseRanking: buildExerciseRanking(filtered),
+    recommendedBodyParts: buildRecommendedBodyParts(logs, filter.referenceDate),
+    weeklyVolumeTrend: buildWeeklyVolumeTrend(logs, filter.referenceDate),
+    exerciseProgressChanges: buildExerciseProgressChanges(logs),
     filter,
   };
 }

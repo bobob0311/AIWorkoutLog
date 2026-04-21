@@ -1,0 +1,3 @@
+display_name: Harness Workflow
+short_description: Operate this repository's phase and context workflow.
+default_prompt: Use the harness-workflow skill to inspect the active phase, follow the current step, and keep phase/context state synchronized.

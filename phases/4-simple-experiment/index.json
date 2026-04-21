@@ -1,0 +1,23 @@
+{
+  "project": "Health Log Website",
+  "phase": "4-simple-experiment",
+  "goal": "Create a small experimental phase for quick validation without touching production scope.",
+  "status": "in_progress",
+  "steps": [
+    {
+      "step": 0,
+      "name": "define-experiment",
+      "status": "completed"
+    },
+    {
+      "step": 1,
+      "name": "build-small-prototype",
+      "status": "pending"
+    },
+    {
+      "step": 2,
+      "name": "review-result",
+      "status": "pending"
+    }
+  ]
+}

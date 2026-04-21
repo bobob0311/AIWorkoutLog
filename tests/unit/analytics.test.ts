@@ -207,3 +207,166 @@ describe("analytics service", () => {
     });
   });
 });
+
+const insightLogs: ExerciseLog[] = [
+  {
+    id: "insight-1",
+    date: "2026-04-06",
+    bodyPart: "back",
+    exerciseName: "Row",
+    exerciseSource: "base",
+    memo: "",
+    sets: [
+      { setOrder: 1, weight: 80, reps: 10, volume: 800 },
+      { setOrder: 2, weight: 80, reps: 10, volume: 800 },
+    ],
+    totalVolume: 1600,
+  },
+  {
+    id: "insight-2",
+    date: "2026-04-07",
+    bodyPart: "legs",
+    exerciseName: "Squat",
+    exerciseSource: "base",
+    memo: "",
+    sets: [{ setOrder: 1, weight: 120, reps: 10, volume: 1200 }],
+    totalVolume: 1200,
+  },
+  {
+    id: "insight-3",
+    date: "2026-04-13",
+    bodyPart: "back",
+    exerciseName: "Row",
+    exerciseSource: "base",
+    memo: "",
+    sets: [{ setOrder: 1, weight: 80, reps: 8, volume: 640 }],
+    totalVolume: 640,
+  },
+  {
+    id: "insight-4",
+    date: "2026-04-14",
+    bodyPart: "chest",
+    exerciseName: "Bench Press",
+    exerciseSource: "base",
+    memo: "",
+    sets: [
+      { setOrder: 1, weight: 80, reps: 10, volume: 800 },
+      { setOrder: 2, weight: 80, reps: 10, volume: 800 },
+    ],
+    totalVolume: 1600,
+  },
+  {
+    id: "insight-5",
+    date: "2026-04-20",
+    bodyPart: "chest",
+    exerciseName: "Bench Press",
+    exerciseSource: "base",
+    memo: "",
+    sets: [
+      { setOrder: 1, weight: 85, reps: 8, volume: 680 },
+      { setOrder: 2, weight: 85, reps: 8, volume: 680 },
+    ],
+    totalVolume: 1360,
+  },
+  {
+    id: "insight-6",
+    date: "2026-04-20",
+    bodyPart: "arms",
+    exerciseName: "Curl",
+    exerciseSource: "base",
+    memo: "",
+    sets: [{ setOrder: 1, weight: 25, reps: 12, volume: 300 }],
+    totalVolume: 300,
+  },
+];
+
+describe("training insight analytics", () => {
+  it("recommends undertrained body parts with explicit evidence", () => {
+    const result = buildAnalyticsViewModel(insightLogs, {
+      preset: "week",
+      referenceDate: "2026-04-20",
+    });
+
+    expect(result.recommendedBodyParts[0]).toMatchObject({
+      bodyPart: "back",
+      currentVolume: 0,
+      previousVolume: 640,
+      changeRate: -100,
+    });
+    expect(result.recommendedBodyParts[0].evidence.length).toBeGreaterThan(0);
+    expect(result.recommendedBodyParts[0].evidence.map((item) => item.label)).toContain("지난주 대비");
+  });
+
+  it("compares current week to the previous week through the same reference weekday", () => {
+    const result = buildAnalyticsViewModel(insightLogs, {
+      preset: "week",
+      referenceDate: "2026-04-20",
+    });
+
+    expect(result.weeklyVolumeTrend).toMatchObject({
+      currentStartDate: "2026-04-20",
+      currentEndDate: "2026-04-20",
+      previousStartDate: "2026-04-13",
+      previousEndDate: "2026-04-13",
+      currentWeekVolume: 1660,
+      previousComparableVolume: 640,
+      delta: 1020,
+      changeRate: 159.4,
+      status: "increase",
+    });
+  });
+
+  it("builds recent completed week volume buckets", () => {
+    const result = buildAnalyticsViewModel(insightLogs, {
+      preset: "week",
+      referenceDate: "2026-04-20",
+    });
+
+    expect(result.weeklyVolumeTrend.recentWeeks).toHaveLength(4);
+    expect(result.weeklyVolumeTrend.recentWeeks[2]).toMatchObject({
+      startDate: "2026-04-06",
+      endDate: "2026-04-12",
+      totalVolume: 2800,
+    });
+    expect(result.weeklyVolumeTrend.recentWeeks[3]).toMatchObject({
+      startDate: "2026-04-13",
+      endDate: "2026-04-19",
+      totalVolume: 2240,
+    });
+  });
+
+  it("compares the latest two sessions for each exercise", () => {
+    const result = buildAnalyticsViewModel(insightLogs, {
+      preset: "week",
+      referenceDate: "2026-04-20",
+    });
+    const bench = result.exerciseProgressChanges.find((item) => item.exerciseName === "Bench Press");
+
+    expect(bench).toMatchObject({
+      latestDate: "2026-04-20",
+      previousDate: "2026-04-14",
+      latestVolume: 1360,
+      previousVolume: 1600,
+      volumeChangeRate: -15,
+      latestMaxWeight: 85,
+      previousMaxWeight: 80,
+      maxWeightDelta: 5,
+      status: "heavy_session",
+    });
+  });
+
+  it("marks one-session exercises as insufficient for progress comparison", () => {
+    const result = buildAnalyticsViewModel(insightLogs, {
+      preset: "week",
+      referenceDate: "2026-04-20",
+    });
+    const curl = result.exerciseProgressChanges.find((item) => item.exerciseName === "Curl");
+
+    expect(curl).toMatchObject({
+      previousDate: null,
+      previousVolume: null,
+      status: "insufficient",
+      note: "비교할 이전 세션이 아직 없습니다.",
+    });
+  });
+});

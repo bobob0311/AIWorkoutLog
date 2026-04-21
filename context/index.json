@@ -1,5 +1,5 @@
 {
-  "active": "1-ux-analytics-refactor",
+  "active": "4-simple-experiment",
   "items": [
     {
       "phase": "0-mvp",
@@ -10,6 +10,21 @@
       "phase": "1-ux-analytics-refactor",
       "file": "context/1-ux-analytics-refactor.json",
       "status": "completed"
+    },
+    {
+      "phase": "2-training-insight-ui",
+      "file": "context/2-training-insight-ui.json",
+      "status": "completed"
+    },
+    {
+      "phase": "3-analytics-refactor-and-date-baseline",
+      "file": "context/3-analytics-refactor-and-date-baseline.json",
+      "status": "in_progress"
+    },
+    {
+      "phase": "4-simple-experiment",
+      "file": "context/4-simple-experiment.json",
+      "status": "in_progress"
     }
   ]
 }

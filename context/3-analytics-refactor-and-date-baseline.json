@@ -1,0 +1,37 @@
+{
+  "phase": "3-analytics-refactor-and-date-baseline",
+  "title": "분석 화면 리팩토링과 기준 날짜 정리",
+  "status": "in_progress",
+  "as_is": [
+    "AnalyticsDashboard가 필터, 통계 본문, 비교 본문, 카드 렌더링을 모두 담당하고 있다.",
+    "분석 client page가 referenceDate를 2026-04-14로 고정하고 있다.",
+    "일부 문서와 phase 설명은 한글 작성 규칙에 비해 영어 지시문이 남아 있다."
+  ],
+  "to_be": [
+    "분석 화면 컴포넌트를 역할 단위로 분리한다.",
+    "운영 화면의 기준일은 실제 오늘 날짜를 사용한다.",
+    "문서, phase, 테스트 설명, 사용자 노출 문구는 가급적 한글로 유지한다."
+  ],
+  "done": [
+    "3-analytics-refactor-and-date-baseline phase를 생성했다.",
+    "PRD, ADR, ARCHITECTURE, UI_GUIDE에 리팩토링과 기준 날짜 결정을 반영했다.",
+    "날짜 helper 단위 테스트와 통계/비교 화면 UI 기대값 테스트를 한글 기준으로 갱신했다.",
+    "Added shared date helper and removed hardcoded analytics reference date.",
+    "AnalyticsDashboard를 상태와 view model 생성 중심으로 축소하고, 필터/통계/비교/반복 UI 컴포넌트로 렌더링 책임을 분리했다."
+  ],
+  "next": [
+    "Step 4에서 남은 영어 summary/copy/test 설명을 한글 기준으로 정리한다."
+  ],
+  "decisions": [
+    "이번 phase는 새 분석 기능을 추가하지 않는다.",
+    "통계/비교 화면의 사용자 경험은 유지하고 내부 구조를 정리한다.",
+    "오늘 날짜 helper는 shared/lib에 둔다.",
+    "테스트에서 고정 기준일이 필요하면 props로 주입한다."
+  ],
+  "risks": [
+    "컴포넌트 분리 중 통계/비교 화면의 렌더링 순서가 바뀔 수 있다.",
+    "오늘 날짜 기준으로 바뀌면서 mock 데이터가 없는 날짜에서는 빈 상태가 더 자주 보일 수 있다.",
+    "문서 전체의 기존 깨진 한글을 한 번에 정리하면 범위가 커지므로 이번 phase에서는 새로 다루는 문서와 핵심 PRD를 우선한다."
+  ],
+  "updated_at": "2026-04-21T21:02:06+0900"
+}

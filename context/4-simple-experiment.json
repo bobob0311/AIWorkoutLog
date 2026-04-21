@@ -1,0 +1,33 @@
+{
+  "phase": "4-simple-experiment",
+  "title": "Phase 4 Simple Experiment",
+  "status": "in_progress",
+  "as_is": [
+    "The product has several completed analytics and calendar phases.",
+    "Phase 3 is still in progress, so this phase should avoid broad refactors or production-critical changes."
+  ],
+  "to_be": [
+    "A small experiment is defined with a narrow goal, a simple prototype, and a short review note.",
+    "The experiment can be abandoned or promoted later without blocking existing phase work."
+  ],
+  "done": [
+    "Step 0 완료: 실험 가설, 최소 프로토타입 범위, 제외 범위, 롤백/승격 기준을 정의했다."
+  ],
+  "next": [
+    "Complete step 1: build-small-prototype"
+  ],
+  "decisions": [
+    "Keep phase 4 intentionally small: define, prototype, review.",
+    "Do not change shared application architecture unless the experiment explicitly proves the need.",
+    "가설: 비교 화면 상단에 '오늘 기록 시작'으로 이어지는 작은 추천 진입점을 실험하면, 사용자가 추천 부위를 확인한 직후 기록 행동으로 더 자연스럽게 이동할 수 있다.",
+    "최소 프로토타입: 기존 데이터 모델과 라우팅을 바꾸지 않고, `/analytics/compare` 화면 안에 현재 추천 1순위 부위와 선택 날짜를 담은 개발자/사용자 가시 진입점만 추가한다.",
+    "검증 기준: 추천 근거 문구가 유지되고, 달력/통계 계산 규칙을 새로 만들지 않으며, 기록 화면으로 이어질 대상 날짜와 부위가 명확히 드러나야 한다.",
+    "제외 범위: 새 저장소, Supabase 연동, 기록 생성 플로우 재설계, 추천 알고리즘 변경, Phase 3 리팩터링 범위와 겹치는 대형 컴포넌트 재구성은 하지 않는다.",
+    "롤백/승격: 실험이 복잡도를 늘리거나 기존 비교 화면의 해석 흐름을 해치면 Phase 4 변경만 되돌린다. 유효하면 후속 phase에서 정식 기록 진입 UX로 승격하고 테스트 범위를 넓힌다."
+  ],
+  "risks": [
+    "Phase 3 remains in progress, so overlapping edits may create avoidable merge noise.",
+    "An experiment can become too large if acceptance criteria are not kept narrow."
+  ],
+  "updated_at": "2026-04-21T21:07:43+09:00"
+}

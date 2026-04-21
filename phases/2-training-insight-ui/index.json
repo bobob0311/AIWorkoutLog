@@ -1,0 +1,44 @@
+{
+  "project": "Health Log Website",
+  "phase": "2-training-insight-ui",
+  "goal": "중상급자용 훈련 인사이트 UI를 통계/비교 화면으로 분리하고 추천과 성장 판단을 근거 수치와 함께 제공한다.",
+  "status": "completed",
+  "steps": [
+    {
+      "step": 0,
+      "name": "document-training-insight-decisions",
+      "status": "completed",
+      "summary": "훈련 인사이트 배치, 추천 근거, 비교 규칙, 아키텍처, UI 가이드를 문서화했다."
+    },
+    {
+      "step": 1,
+      "name": "analytics-view-model-tests",
+      "status": "completed",
+      "summary": "추천 근거, 같은 요일까지의 주간 비교, 최근 주간 버킷, 운동별 수행 변화, 비교 부족 상태 테스트를 추가했다."
+    },
+    {
+      "step": 2,
+      "name": "recommendation-and-weekly-trend-model",
+      "status": "completed",
+      "summary": "추천 부위와 주간 추세 view model을 추가하고 근거와 상태 계산을 service 계층에 배치했다."
+    },
+    {
+      "step": 3,
+      "name": "exercise-progress-model",
+      "status": "completed",
+      "summary": "운동별 최근 세션과 직전 세션의 볼륨, 최고 중량, 세트 수, 평균 반복, 상태, 메모를 계산했다."
+    },
+    {
+      "step": 4,
+      "name": "analytics-dashboard-insight-ui",
+      "status": "completed",
+      "summary": "통계 화면과 비교 화면을 분리하고 주요 UI 문구를 한글로 정리했다."
+    },
+    {
+      "step": 5,
+      "name": "polish-and-review",
+      "status": "completed",
+      "summary": "lint, unit test, UI test, build로 검증했다."
+    }
+  ]
+}

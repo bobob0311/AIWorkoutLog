@@ -3,7 +3,7 @@
 import Link from "next/link";
 import styled from "@emotion/styled";
 
-type NavigationKey = "calendar" | "analytics" | "detail";
+type NavigationKey = "calendar" | "analytics" | "comparison" | "detail";
 
 type AppNavigationProps = {
   current: NavigationKey;
@@ -54,18 +54,22 @@ const Current = styled.strong`
 function getCurrentLabel(current: NavigationKey) {
   if (current === "calendar") return "달력";
   if (current === "analytics") return "통계";
-  return "날짜 상세";
+  if (current === "comparison") return "비교";
+  return "날짜 기록";
 }
 
 export function AppNavigation({ current, date }: AppNavigationProps) {
   return (
-    <Nav aria-label="앱 주요 이동">
+    <Nav aria-label="주요 화면 이동">
       <LinkRow>
         <NavLink href="/calendar" $active={current === "calendar"}>
           달력
         </NavLink>
         <NavLink href="/analytics" $active={current === "analytics"}>
           통계
+        </NavLink>
+        <NavLink href="/analytics/compare" $active={current === "comparison"}>
+          비교
         </NavLink>
         {date ? (
           <NavLink href={`/calendar/${date}`} $active={current === "detail"}>
